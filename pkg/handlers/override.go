@@ -42,8 +42,8 @@ func Override(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body OverrideBody
-	if ParseRequestBody(r, &body) != nil {
-		RenderError(err, http.StatusInternalServerError, w, r)
+	if parseErr := ParseRequestBody(r, &body); parseErr != nil {
+		RenderError(parseErr, http.StatusBadRequest, w, r)
 		return
 	}
 
@@ -72,7 +72,7 @@ func Override(w http.ResponseWriter, r *http.Request) {
 	logger.Debug().Str("experimentKey", experimentKey).Str("variationKey", body.VariationKey).Msg("setting override")
 	wasSet, err := optlyClient.SetForcedVariation(experimentKey, body.UserID, body.VariationKey)
 	switch {
-	case err == optimizely.ErrEntityNotFound:
+	case errors.Is(err, optimizely.ErrEntityNotFound):
 		RenderError(err, http.StatusBadRequest, w, r)
 	case err != nil:
 		RenderError(err, http.StatusInternalServerError, w, r)
