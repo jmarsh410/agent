@@ -92,7 +92,7 @@ paths:
         '204':
           description: Forced variation was already set
         '400':
-          description: Invalid user id, experiment key, or variation key
+          description: Invalid user id
         '401':
           description: Unauthorized, invalid JWT
         '403':

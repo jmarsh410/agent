@@ -174,6 +174,8 @@ func (c *OptlyClient) GetExperimentVariation(experimentKey string, shouldActivat
 
 // ErrForcedVariationsUninitialized is returned from SetForcedVariation and GetForcedVariation when the forced variations store is not initialized
 var ErrForcedVariationsUninitialized = errors.New("client forced variations store not initialized")
+var ErrUnknownExperimentKey = errors.New("unknown experiment key")
+var ErrUnknownVariationKey = errors.New("unknown variation key")
 
 // SetForcedVariation sets a forced variation for the argument experiment key and user ID
 // Returns false if the same forced variation was already set for the argument experiment and user, true otherwise
@@ -186,6 +188,21 @@ func (c *OptlyClient) SetForcedVariation(experimentKey, userID, variationKey str
 		UserID:        userID,
 		ExperimentKey: experimentKey,
 	}
+
+	optimizelyConfig := c.GetOptimizelyConfig()
+	if optimizelyConfig == nil {
+		return false, errors.New("optimizely config is null")
+	}
+
+	experiment, ok := optimizelyConfig.ExperimentsMap[experimentKey]
+	if !ok {
+		return false, ErrUnknownExperimentKey
+	}
+
+	if _, ok := experiment.VariationsMap[variationKey]; !ok {
+		return false, ErrUnknownVariationKey
+	}
+
 	previousVariationKey, ok := c.ForcedVariations.GetVariation(forcedVariationKey)
 	c.ForcedVariations.SetVariation(forcedVariationKey, variationKey)
 	wasSet := !ok || previousVariationKey != variationKey
